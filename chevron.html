@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Chevron tiles layout</title>
+    <script>
+        let canvas, ctx;
+        let side1, side2, angle, joint, color1, color2, random, shiftX, shiftY;
+        let width, height, background, scale;
+        let boundX, boundY;
+
+        function draw() {
+            load();
+            clearCanvas();
+
+            boundX = side2 * Math.sin(angle);
+            boundY = side2 * Math.cos(angle) + side1;
+
+            let jointY = joint / Math.sin(angle);
+
+            let rows = Math.ceil(height / (side1 + jointY));
+            let extraRows = Math.ceil((boundY - side1) / (side1 + jointY));
+            let startRow = Math.floor(-shiftY / (side1 + jointY)) - extraRows;
+            let endRow = startRow + extraRows + rows;
+
+            let startColumn = -Math.ceil(shiftX / (boundX + joint));
+            let endColumn = startColumn + Math.ceil(width / (boundX + joint));
+
+            for (let row = startRow; row <= endRow; row++) {
+                for (let column = startColumn; column <= endColumn; column++) {
+                    let x = (boundX + joint) * column + shiftX;
+                    let y = (side1 + jointY) * row + shiftY;
+                    if (column % 2 === 0) {
+                        drawTileR(x, y, getColor(column, row));
+                    } else {
+                        drawTileL(x, y, getColor(column, row));
+                    }
+                }
+            }
+        }
+
+        function getColor(column, row) {
+            let mod = (column + row) % 2;
+            if (random) {
+                mod = Math.floor(Math.random() * 10) % 2;
+            }
+            return mod ? color2 : color1;
+        }
+
+        function drawTileR(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            moveTo(x, y);
+            lineTo(x, y + side1);
+            lineTo(x + boundX, y + boundY);
+            lineTo(x + boundX, y + boundY - side1);
+            lineTo(x, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawTileL(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            moveTo(x, y + boundY);
+            lineTo(x + boundX, y + side1);
+            lineTo(x + boundX, y);
+            lineTo(x, y + boundY - side1);
+            lineTo(x, y + boundY);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function moveTo(x, y) {
+            ctx.moveTo(x, height - y);
+        }
+
+        function lineTo(x, y) {
+            ctx.lineTo(x, height - y);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+            ctx.fillStyle = background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(scale, scale);
+            ctx.beginPath();
+        }
+
+        function load() {
+            canvas = document.getElementById("surface");
+            ctx = canvas.getContext("2d");
+            side1 = numericValueById("side1");
+            side2 = numericValueById("side2");
+            angle = numericValueById("angle") / 180 * Math.PI;
+            joint = numericValueById("joint");
+            scale = numericValueById("scale");
+            width = numericValueById("width");
+            height = numericValueById("height");
+            background = document.getElementById("background").value;
+            color1 = document.getElementById("color1").value;
+            color2 = document.getElementById("color2").value;
+            random = document.getElementById("random").checked;
+            shiftX = numericValueById("shiftX");
+            shiftY = numericValueById("shiftY");
+        }
+
+        function numericValueById(id) {
+            return parseFloat(document.getElementById(id).value);
+        }
+
+    </script>
+</head>
+<body onload="draw()">
+<h4>Surface</h4>
+<table>
+    <tr>
+        <td><label for="width">Width</label></td>
+        <td><input type="number" id="width" value="3000"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="height">Height</label></td>
+        <td><input type="number" id="height" value="600"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="background">Color</label></td>
+        <td><input type="color" id="background" value="#929292"/></td>
+    </tr>
+    <tr>
+        <td><label for="scale">Scale</label></td>
+        <td><input type="number" id="scale" value="0.3"/></td>
+    </tr>
+</table>
+
+<h4>Tiles</h4>
+<table>
+    <tr>
+        <td><label for="side1">Side 1</label></td>
+        <td><input type="number" id="side1" value="65"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="side2">Side 2</label></td>
+        <td><input type="number" id="side2" value="260"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="angle">Angle</label></td>
+        <td><input type="number" id="angle" value="60"/> &deg;</td>
+    </tr>
+    <tr>
+        <td><label for="joint">Joint</label></td>
+        <td><input type="number" id="joint" value="5"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="color1">Color 1</label></td>
+        <td><input type="color" id="color1" value="#f6f5f5"/></td>
+    </tr>
+    <tr>
+        <td><label for="color2">Color 2</label></td>
+        <td><input type="color" id="color2" value="#e4e4e4"/></td>
+    </tr>
+    <tr>
+        <td><label for="random">Randomize layout</label></td>
+        <td><input type="checkbox" id="random"/></td>
+    </tr>
+    <tr>
+        <td><label for="shiftX">Horizontal shift</label></td>
+        <td><input type="number" id="shiftX" value="0"/> mm</td>
+    </tr>
+    <tr>
+        <td><label for="shiftY">Vertical shift</label></td>
+        <td><input type="number" id="shiftY" value="0"/> mm</td>
+    </tr>
+</table>
+
+<button onclick="draw()">Draw</button>
+<br/><br/>
+
+<canvas id="surface" width="0" height="0" style="border:1px solid;">
+</canvas>
+</body>
+
+</html>
